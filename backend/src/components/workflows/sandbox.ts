@@ -1,4 +1,4 @@
-import { stat } from 'node:fs/promises';
+import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Sandbox } from '@alibaba-group/opensandbox';
 
@@ -25,6 +25,14 @@ async function pathExists(path: string): Promise<boolean> {
     .catch(() => false);
 }
 
+async function firstLevelSubdirs(root: string): Promise<string[]> {
+  const entries = await readdir(root, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
+
 export async function resolveSandboxConfig(
   worktreePath: string,
 ): Promise<{ image: string }> {
@@ -34,8 +42,17 @@ export async function resolveSandboxConfig(
     }
   }
 
+  const subdirs = await firstLevelSubdirs(worktreePath);
+  for (const [marker, type] of PROJECT_MARKERS) {
+    for (const dir of subdirs) {
+      if (await pathExists(join(worktreePath, dir, marker))) {
+        return { image: PROJECT_IMAGES[type] };
+      }
+    }
+  }
+
   throw new Error(
-    `Unsupported project: no recognized manifest (${PROJECT_MARKERS.map(([m]) => m).join(', ')}) at the repo root.`,
+    `Unsupported project: no recognized manifest (${PROJECT_MARKERS.map(([m]) => m).join(', ')}) at the repo root or its immediate subdirectories.`,
   );
 }
 
