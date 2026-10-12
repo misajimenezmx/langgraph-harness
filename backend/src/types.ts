@@ -61,7 +61,6 @@ export type LLM = {
   model: ModelName;
   name: string;
   contextWindow: number;
-  isDefault?: boolean;
   tokenizerRepo?: string;
 };
 

@@ -205,18 +205,18 @@ export const noteFooter = `---
 export const toHostDataPath = (containerPath: string): string =>
   join(config.hostDataPath, relative(config.dataPath, containerPath));
 
-export const llms: LLM[] = [
-  {
-    provider: LLMProvider.OpenRouter,
-    name: 'Gemini 2.5 Flash Lite',
-    model: ModelName.Gemini25FlashLite,
-    contextWindow: 1_048_576,
-  },
+const allLlms: LLM[] = [
   {
     provider: LLMProvider.OpenRouter,
     name: 'GPT 5 Mini',
     model: ModelName.Gpt5Mini,
     contextWindow: 400_000,
+  },
+  {
+    provider: LLMProvider.OpenRouter,
+    name: 'Gemini 2.5 Flash Lite',
+    model: ModelName.Gemini25FlashLite,
+    contextWindow: 1_048_576,
   },
   {
     provider: LLMProvider.OpenRouter,
@@ -236,7 +236,6 @@ export const llms: LLM[] = [
     model: ModelName.Qwen36Awq,
     contextWindow: 262_144,
     tokenizerRepo: 'Qwen/Qwen3.6-35B-A3B',
-    isDefault: true,
   },
   {
     provider: LLMProvider.Sglang,
@@ -300,6 +299,37 @@ export const llms: LLM[] = [
     contextWindow: 131_072,
   },
 ];
+
+// A provider counts as available only when the user actually configured its
+// credential in .env — a base URL copied from .env.example (which is always
+// present) must not make a self-hosted provider (e.g. sglang) look configured
+// and get selected as the default.
+const providerConfigured: Record<LLMProvider, () => boolean> = {
+  [LLMProvider.OpenRouter]: () => !!process.env.OPENROUTER_API_KEY,
+  [LLMProvider.Ollama]: () => !!process.env.OLLAMA_API_KEY,
+  [LLMProvider.Sglang]: () => !!process.env.SGLANG_API_KEY,
+  [LLMProvider.Gemini]: () => !!process.env.GEMINI_API_KEY,
+  [LLMProvider.Groq]: () => !!process.env.GROQ_API_KEY,
+};
+
+const configuredLlms = allLlms.filter((m) => providerConfigured[m.provider]());
+
+// Never fall back to the full catalog: that reintroduces the self-hosted sglang
+// default and fails with ECONNREFUSED when no provider is configured. The
+// workflow input schemas (z.enum) need a non-empty list at import time, so fall
+// back to cloud-only entries — validateEnv() refuses to start without a
+// configured provider, so this list is never actually used to run a model.
+const cloudFallback = allLlms.filter(
+  (m) => m.provider === LLMProvider.OpenRouter,
+);
+
+export const llms: LLM[] = configuredLlms.length
+  ? configuredLlms
+  : cloudFallback;
+
+// The first entry in the configured list is the default — no separate flag to
+// keep in sync, and a provider only appears here once its credential is set.
+export const defaultModel: ModelName = llms[0].model;
 
 // PoC — GitLab projects ingested into supermemory (see supermemory/ at the repo
 // root). search_project_history/get_project_issue fan out across all of these.

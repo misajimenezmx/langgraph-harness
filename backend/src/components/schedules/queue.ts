@@ -10,7 +10,7 @@ import { enqueueTaskResolve } from '#components/workflows/task-resolve/queue.js'
 import { schedulesDal } from './dal.js';
 import { firstOccurrence, toCronPattern } from './recurrence.js';
 
-import { config, llms } from '#utils/config.js';
+import { config, defaultModel } from '#utils/config.js';
 import { parseHarnessYml } from '#utils/harness-config.js';
 import { logger } from '#utils/logger.js';
 
@@ -29,7 +29,7 @@ async function buildRunInput(
     prompt: schedule.prompt,
     defaultBranch: schedule.default_branch,
     submittedBy: schedule.created_by,
-    model: llms.find((m) => m.isDefault)?.model ?? llms[0].model,
+    model: defaultModel,
     config: await parseHarnessYml(schedule.project_path),
   };
 }

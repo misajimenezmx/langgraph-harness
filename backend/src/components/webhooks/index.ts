@@ -13,12 +13,11 @@ import { enqueueTaskResolve } from '#components/workflows/task-resolve/queue.js'
 import { enqueueWorkItemResolve } from '#components/workflows/work-item-resolve/queue.js';
 
 import { webhookAuth } from '#utils/auth.js';
-import { config, isProjectInScope, llms } from '#utils/config.js';
+import { config, defaultModel, isProjectInScope } from '#utils/config.js';
 import { parseHarnessYml, shouldReviewBranch } from '#utils/harness-config.js';
 import { logger } from '#utils/logger.js';
 import { isAutomatedStatusNote } from '#utils/notes.js';
 
-const defaultModel = llms.find((m) => m.isDefault)?.model ?? llms[0].model;
 const stableBranchRegExp = new RegExp(config.mrReview.stableBranchPattern);
 
 // `assignees`, deprecated `assignee`, and `changes.assignees.previous`/`.current` all carry the same { username } shape.

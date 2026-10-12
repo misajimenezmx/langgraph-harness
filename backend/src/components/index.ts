@@ -45,7 +45,7 @@ import { createTaskSchema } from './workflows/task-resolve/validation.js';
 import { getStatus as getWorkItemResolveQueueStatus } from './workflows/work-item-resolve/queue.js';
 
 import { authMacro, isAdmin } from '#utils/auth.js';
-import { llms } from '#utils/config.js';
+import { defaultModel, llms } from '#utils/config.js';
 import { errors } from '#utils/errors.js';
 import { resolveProjectFromUrl } from '#utils/gitlab.js';
 import { parseHarnessYml } from '#utils/harness-config.js';
@@ -225,7 +225,7 @@ export const api = new Elysia({ prefix: '/api' })
                 prompt: body.prompt,
                 defaultBranch,
                 submittedBy: session.username,
-                model: llms.find((m) => m.isDefault)?.model ?? llms[0].model,
+                model: defaultModel,
                 config: await parseHarnessYml(projectPath),
               };
 
