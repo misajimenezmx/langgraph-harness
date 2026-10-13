@@ -48,10 +48,10 @@ cp .env.example .env
 | `AUTH_ALLOWED_EMAIL_DOMAINS`    | No             | —                           | Comma-separated email domains allowed to sign in via GitLab OAuth. Empty means no restriction                                                                          |
 | `ISSUE_TRACKER_URL`             | No             | this repo's GitHub issues   | Link shown in the "file an issue" footer on AI-authored MR/thread notes                                                                                                |
 | `OPENROUTER_API_KEY`            | One of         | —                           | For cloud LLMs (GPT, Claude) in MR review. Chat instead uses each user's own key, saved (encrypted) from the Settings page — this env var doesn't cover it.            |
-| `OLLAMA_BASE_URL`               | One of         | `http://localhost:11434`    | For local LLMs                                                                                                                                                         |
-| `OLLAMA_API_KEY`                | No             | —                           | Bearer token sent to Ollama, for authenticated/hosted Ollama endpoints                                                                                                 |
-| `SGLANG_BASE_URL`               | One of         | `http://localhost:30000`    | For local LLMs served via sglang                                                                                                                                       |
-| `SGLANG_API_KEY`                | No             | —                           | Bearer token sent to sglang, for authenticated/hosted sglang endpoints                                                                                                 |
+| `OLLAMA_BASE_URL`               | No             | `http://localhost:11434`    | Endpoint for local LLMs — only used once `OLLAMA_API_KEY` is set                                                                                                       |
+| `OLLAMA_API_KEY`                | One of         | —                           | Enables the Ollama models; also sent as a bearer token for authenticated/hosted Ollama endpoints — set any non-empty value for an unauthenticated local one            |
+| `SGLANG_BASE_URL`               | No             | `http://localhost:30000`    | Endpoint for local LLMs served via sglang — only used once `SGLANG_API_KEY` is set                                                                                     |
+| `SGLANG_API_KEY`                | One of         | —                           | Enables the sglang models; also sent as a bearer token for authenticated/hosted sglang endpoints — set any non-empty value for an unauthenticated local one            |
 | `GEMINI_API_KEY`                | One of         | —                           | Free-tier Google AI Studio key, for MR review. Chat doesn't support this provider (see `OPENROUTER_API_KEY` above)                                                     |
 | `GROQ_API_KEY`                  | One of         | —                           | Free-tier Groq key, for MR review. Chat doesn't support this provider (see `OPENROUTER_API_KEY` above)                                                                 |
 | `DB_HOST`                       | No             | `localhost`                 | PostgreSQL host                                                                                                                                                        |
@@ -66,6 +66,8 @@ cp .env.example .env
 | `MONITORING_URL`                | No             | `http://localhost:4100`     | URL of the standalone monitoring service backing the admin-only `/monitoring` page                                                                                     |
 | `MONITORING_API_KEY`            | For monitoring | —                           | Shared key presented to the monitoring service on every request; must match its own `MONITORING_API_KEY`                                                               |
 | `LOG_LEVEL`                     | No             | `info`                      | Log verbosity: `debug`, `info`, `warn`, `error`                                                                                                                        |
+
+A provider's models are available to the app only when its `*_API_KEY` above is set — the model catalog (UI picker, workflow defaults, everything) is built from exactly those providers. A base URL alone doesn't enable a provider, so a base URL copied from `.env.example` can never make an unconfigured local server look available.
 
 **3. Run database migrations**
 

@@ -13,7 +13,12 @@ import { enqueueTaskResolve } from '#components/workflows/task-resolve/queue.js'
 import { enqueueWorkItemResolve } from '#components/workflows/work-item-resolve/queue.js';
 
 import { webhookAuth } from '#utils/auth.js';
-import { config, defaultModel, isProjectInScope } from '#utils/config.js';
+import {
+  config,
+  defaultModel,
+  isProjectInScope,
+  resolveModel,
+} from '#utils/config.js';
 import { parseHarnessYml, shouldReviewBranch } from '#utils/harness-config.js';
 import { logger } from '#utils/logger.js';
 import { isAutomatedStatusNote } from '#utils/notes.js';
@@ -295,7 +300,7 @@ export const webhook = new Elysia({ prefix: '/webhooks' })
       const harnessConfig = await parseHarnessYml(projectPath);
 
       if (thread.kind === RunKind.TaskResolve) {
-        const { defaultBranch, submittedBy, model } =
+        const { defaultBranch, submittedBy } =
           latestRun.input as TaskResolveRunInput;
 
         // The comment itself is the next instruction — unlike work-item-resolve, which re-reads its issue.
@@ -306,7 +311,10 @@ export const webhook = new Elysia({ prefix: '/webhooks' })
           prompt: noteText,
           defaultBranch,
           submittedBy,
-          model,
+          // Replays the previous run's model — unless its provider is no
+          // longer configured in .env, in which case resolveModel pins the
+          // run to the configured default.
+          model: resolveModel(latestRun.input.model),
           config: harnessConfig,
         };
 
@@ -332,7 +340,7 @@ export const webhook = new Elysia({ prefix: '/webhooks' })
         };
       }
 
-      const { issueIid, defaultBranch, assignedBy, model, issueKind } =
+      const { issueIid, defaultBranch, assignedBy, issueKind } =
         latestRun.input as WorkItemResolveRunInput;
 
       const workItemResolveInput = {
@@ -341,7 +349,10 @@ export const webhook = new Elysia({ prefix: '/webhooks' })
         issueIid,
         defaultBranch,
         assignedBy,
-        model,
+        // Replays the previous run's model — unless its provider is no longer
+        // configured in .env, in which case resolveModel pins the run to the
+        // configured default.
+        model: resolveModel(latestRun.input.model),
         config: harnessConfig,
         issueKind,
       };

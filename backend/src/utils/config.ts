@@ -331,6 +331,17 @@ export const llms: LLM[] = configuredLlms.length
 // keep in sync, and a provider only appears here once its credential is set.
 export const defaultModel: ModelName = llms[0].model;
 
+// A model can reach a run long after it was recorded: comment-triggered
+// follow-ups copy the previous run's model, and a queued job can outlive the
+// .env it was enqueued under. If that model's provider is no longer configured
+// (e.g. a self-hosted sglang that was switched off), pin the run to the
+// configured default instead of letting it dial an unconfigured endpoint and
+// die with a connection error at request time.
+export const resolveModel = (model: string | undefined): ModelName =>
+  model && llms.some((m) => m.model === model)
+    ? (model as ModelName)
+    : defaultModel;
+
 // PoC — GitLab projects ingested into supermemory (see supermemory/ at the repo
 // root). search_project_history/get_project_issue fan out across all of these.
 // Empty by default — add your own GitLab projects here to enable chat's

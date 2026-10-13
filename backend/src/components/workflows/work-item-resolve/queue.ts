@@ -7,7 +7,7 @@ import { createRunQueue } from '#components/runs/bullmq.js';
 import { runsService } from '#components/runs/service.js';
 import { threadsDal } from '#components/threads/dal.js';
 
-import { config } from '#utils/config.js';
+import { config, resolveModel } from '#utils/config.js';
 import { logger } from '#utils/logger.js';
 
 type WorkItemResolveJob = {
@@ -72,7 +72,10 @@ async function drainPendingRerun(job: Job<WorkItemResolveJob>) {
     issueIid,
     defaultBranch,
     assignedBy,
-    model,
+    // Replays the previous run's model — unless its provider is no longer
+    // configured in .env, in which case resolveModel pins the run to the
+    // configured default.
+    model: resolveModel(model),
     config: runConfig,
     issueKind,
   };

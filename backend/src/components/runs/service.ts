@@ -25,7 +25,7 @@ import { runsDal } from './dal.js';
 import { runPubSub } from './pubsub.js';
 
 import { getGitlabAccessToken } from '#utils/auth.js';
-import { config, llms } from '#utils/config.js';
+import { config, llms, resolveModel } from '#utils/config.js';
 import { errors, RunAbortedError } from '#utils/errors.js';
 import {
   findRepeatedText,
@@ -112,6 +112,11 @@ export const runsService = {
   ): Promise<void> => {
     const workflow = workflowsService.forKind(kind);
 
+    // A queue payload can outlive the .env it was enqueued under — its model
+    // may name a provider that isn't configured anymore. Pin it to the
+    // configured default so the run never dials an unconfigured endpoint.
+    const runInput: RunInput = { ...input, model: resolveModel(input.model) };
+
     if (workflow.startMode === 'queued') {
       const run = await runsDal.findById(runId);
       // If the run is no longer QUEUED (superseded/deleted), skip silently.
@@ -123,7 +128,7 @@ export const runsService = {
       workflow,
       id,
       runId,
-      input as never,
+      runInput as never,
       (await resolveSecrets(session)) as never,
       checkpointId
         ? { mode: 'retry', fromCheckpointId: checkpointId }

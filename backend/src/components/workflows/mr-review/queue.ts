@@ -5,7 +5,7 @@ import { createRunQueue } from '#components/runs/bullmq.js';
 import { runsService } from '#components/runs/service.js';
 import { workflowsService } from '#components/workflows/service.js';
 
-import { config } from '#utils/config.js';
+import { config, resolveModel } from '#utils/config.js';
 import { logger } from '#utils/logger.js';
 
 type EnqueueMrReviewResult =
@@ -85,7 +85,10 @@ export function initQueueHandlers() {
             runId: toRun.id,
             kind: RunKind.MrReview,
             query,
-            model,
+            // Replays the queued run's model — unless its provider is no
+            // longer configured in .env, in which case resolveModel pins the
+            // run to the configured default.
+            model: resolveModel(model),
             reasoning,
             config,
           },
